@@ -1,0 +1,9 @@
+select product_name as products_name, unit_price 
+	 from products p
+	 full outer join top_limiter on limcount = product_id	
+	 where limcount is not null 
+	 order by unit_price desc;
+   -- this solution is an answer to not being able to use the 'limit' or the
+   --'fetch only' operators in sql since they do not exist in relational
+   --algebra and thus cannot be used, note that this is only the first half
+   --of the query
