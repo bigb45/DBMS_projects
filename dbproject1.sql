@@ -1,4 +1,5 @@
-set search_path to "20290168_Project1";
+set search_path to '20290168_Project1';
+
 --query 1
 select orderid, totalprice, totalwithdiscountprice
 from (select order_id as orderid,unit_price * quantity as totalprice,
@@ -8,9 +9,9 @@ order by totalwithdiscountprice desc, orderid asc limit 10;
 
 
 --query 2
-select shippeddate, order_id, sum(totalprice) as totalprice
+select shippeddate, order_id, sum(totalprice) as totalprice, extract(year from shippeddate) as year
 from (select o.shipped_date as shippeddate,
-	  od.order_id as order_id, od.unit_price * od.quantity * (1-discount) as totalprice, 
+	  od.order_id as order_id, od.unit_price * od.quantity as totalprice, 
 	 	extract(year from o.shipped_date) as year
 	 from order_details od, orders o
 	 where o.order_id = od.order_id) as sub_q
@@ -42,15 +43,8 @@ orders.ship_country	 = customers.country and
 orders.customer_id = customers.customer_id and
 shippers.shipper_id = orders.ship_via and 
 ship_country like '%y' and customers.customer_id like 'M%'
-order by ship_name asc, ship_country desc, customer_id asc, salesperson asc;
-
+order by ship_name asc, ship_country desc, customer_id asc, salesperson asc, freight asc, product_id asc;
 --query 5
---select distinct product_id, customers.customer_id
---from products, customers, orders
-
---where product_id < 5 and 
---	orders.customer_id = customers.customer_id and 
-	--customers.customer_id like 'E%'
 SELECT 
     p.product_id, c.customer_id, extract(year from o.order_date) as year,
 	SUM(CASE WHEN extract( year from o.order_date )=1999 THEN ((1 - discount) * quantity * od.unit_price) ELSE 0 END) AS "1999",
@@ -73,38 +67,38 @@ union
 select 'Suppliers' as tablename, city, company_name, contact_name
 from 
 suppliers
-where contact_name like '%g%';
+where contact_name like '%g%'
+order by contact_name asc;
 
 --query 7
-select *
-from (select product_name as products_name, unit_price 
-	 from products
-	 order by unit_price desc 
-	 limit 5) as top5
-union 
-select * from(select product_name as products_name, unit_price 
-	 from products
-	 order by unit_price asc 
-	 limit 5) as bottom5
+select products_name, unit_price 
+from(
+		 select product_name as products_name, unit_price, row_number() over(order by unit_price asc)
+		 from products ) top
+where row_number < 6 
+union
+select products_name, unit_price 
+from(
+		 select product_name as products_name, unit_price, row_number() over(order by unit_price desc)
+		 from products) top
+where row_number < 6
 order by unit_price desc;
-
+   
 --query 8
-
-with temp as (select sum(round(cast((quantity * order_details.unit_price * (1 - discount)) as numeric) , 2))
-		as categorysales, extract(year from shipped_date) as shippedyear,
-			  categories.category_name
+select shippedyear, 
+		category_name, sum(categorysales)
+		from (select sum(round(cast((quantity * order_details.unit_price * (1 - discount)) as numeric) , 2))
+		as categorysales, extract(year from shipped_date) as shippedyear, categories.category_name
 from order_details 
 join products on order_details.product_id = products.product_id
 join categories on categories.category_id = products.category_id
 join orders on orders.order_id = order_details.order_id
-
 where 	
 	shipped_date > '1997-6-1' and shipped_date is not null
-group by categories.category_name, shippedyear
-)
-select shippedyear, 
-		category_name,
-		sum(temp.categorysales)
-		from temp
-		group by shippedyear, category_name
+group by categories.category_name, shippedyear) subq
+group by shippedyear, category_name
 		order by shippedyear;
+
+		
+		
+
