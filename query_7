@@ -7,3 +7,4 @@ select product_name as products_name, unit_price
    --'fetch only' operators in sql since they do not exist in relational
    --algebra and thus cannot be used, note that this is only the first half
    --of the query
+--ps: upon further inspection, this turned out to be utterly retarded.
