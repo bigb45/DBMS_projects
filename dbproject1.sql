@@ -3,9 +3,11 @@ set search_path to '20290168_Project1';
 --query 1
 select orderid, totalprice, totalwithdiscountprice
 from (select order_id as orderid,unit_price * quantity as totalprice,
-	  unit_price * quantity * (1-discount) as totalwithdiscountprice
+	  unit_price * quantity * (1-discount) as totalwithdiscountprice,
+      	  row_number()over(order by unit_price * quantity * (1-discount) desc, order_id asc)
 	  from order_details details) as sub_q
-order by totalwithdiscountprice desc, orderid asc limit 10;
+where row_number < 11;
+
 
 
 --query 2
